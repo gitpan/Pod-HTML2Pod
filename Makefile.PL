@@ -1,5 +1,5 @@
 # This -*- perl -*- script writes the Makefile for Pod::HTML2Pod
-# Time-stamp: "2000-10-04 01:31:35 MDT"
+# Time-stamp: "2000-10-04 14:39:46 MDT"
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 require 5.004;
@@ -17,7 +17,6 @@ WriteMakefile(
 	                 'HTML::TreeBuilder' => 3.05,
                            # probably requires HTML::Parser
 	                 'HTML::Element' => 3.05,
-		         'Pod::Text' => 0, # don't check version
                          'Carp' => 0, # don't check version
                          'UNIVERSAL' => 0, # don't check version
                          'integer' => 0, # don't check version

@@ -1,6 +1,6 @@
 
 require 5;
- # Time-stamp: "2000-10-04 02:08:49 MDT"
+ # Time-stamp: "2000-10-04 14:42:06 MDT"
 
 package Pod::HTML2Pod;
 use strict;
@@ -10,12 +10,11 @@ use Carp ();
 use HTML::TreeBuilder 3.01 ();
 use HTML::Element 3.05 ();
 use HTML::Tagset (); # presumably used by HTML::TreeBuilder anyhow
-use Pod::Text (); # just for the entities table.
 use HTML::Entities (); # presumably used by HTML::Parser anyhow
 use vars qw($Debug $VERSION %Phrasal %Char2ent
             $nbsp $E_slash $E_vbar $counter);
 
-$VERSION = '4.03';
+$VERSION = '4.04';
 $Debug = 0 unless defined $Debug;
 
 =head1 NAME
@@ -131,7 +130,7 @@ POD can't do tables, images, forms, imagemaps, layers, CSS, embedded
 Java applets or any other kind of object, FONT, or BLINK.  So don't
 try to do any of these things.
 
-Use C<E<lt>h1E<gt>> and C<E<lt>h1E<gt>> for headings.
+Use C<E<lt>h1E<gt>> and C<E<lt>h2E<gt>> for headings.
 
 If you want to have a block of literal example code, put it in a 
 C<E<lt>preE<gt>>.
@@ -256,7 +255,7 @@ into
 
 I.e., currently just turns C<&nbsp;>'s into normal spaces.
 
-* Numeric entities (E<EE<lt>numE<gt>> are used when necessary -- but these
+* Numeric entities (C<EE<lt>numE<gt>>) are used when necessary -- but these
 are not understood by some older POD converters.
 
 * No HTML that you provide will turn into C<FE<lt>...E<gt>>
@@ -273,7 +272,7 @@ but is this correct?
 
 =head1 SEE ALSO
 
-L<perlpod>, L<Pod::Html>, L<HTML::TreeBuilder>, L<Pod::Text>
+L<perlpod>, L<Pod::Html>, L<HTML::TreeBuilder>
 
 And HTML Tidy, at C<http://www.w3.org/People/Raggett/tidy/>
 
@@ -345,11 +344,11 @@ sub convert {
     if(exists $o{'content'}) {
       my($content_r, $is_copy);
       if(!defined $o{'content'}) { # undef content?
-	die "content is undef";
+        die "content is undef";
       } elsif(ref $o{'content'}) { # scalar ref
-	die "content only accepts scalars or scalar refs"
-	  unless ref $o{'content'} eq 'SCALAR';
-	$content_r = $o{'content'};
+        die "content only accepts scalars or scalar refs"
+          unless ref $o{'content'} eq 'SCALAR';
+        $content_r = $o{'content'};
         $is_copy = 0;
       } else { # simple scalar
         $content_r = \$o{'content'};
@@ -359,30 +358,30 @@ sub convert {
       # Nativize newlines, if possible and if need be.
       # Otherwise PREs will be hard to reckon.
       if("\n" ne "\cm" and "\n" ne "\cm\cj" and "\n" ne "\cj") {
-	print "I don't recognize what \"\\n\" means on this system!" if $Debug;
+        print "I don't recognize what \"\\n\" means on this system!" if $Debug;
       } elsif($$content_r =~ m/(\cm\cj|\cm|\cj)/) {
-	my $nl = $1;
-	if($nl eq "\n") {
-	  # no-op
-	  print "# Already in native newline format\n" if $Debug;
-	} else {
-	  unless($is_copy) {
-	    my $x = $$content_r;
-	    $content_r = \$x; # copy
-	    $is_copy = 1;
-	  }
-	  if($nl eq "\cm") {
-	    $$content_r =~ tr/\cm/\n/;
-	    print "# Nativizing newlines from \\cm to \\n\n" if $Debug;
-	  } elsif($nl eq "\cj") {
-	    $$content_r =~ tr/\cj/\n/;
-	    print "# Nativizing newlines from \\cj to \\n\n" if $Debug;
-	  } elsif($nl eq "\cm\cj") {
-	    $$content_r =~ tr/\cj//d;
-	    $$content_r =~ tr/\cm/\n/ unless "\cm" eq "\n";
-	    print "# Nativizing newlines from \\cm\\cj to \\n\n" if $Debug;
-	  }
-	}
+        my $nl = $1;
+        if($nl eq "\n") {
+          # no-op
+          print "# Already in native newline format\n" if $Debug;
+        } else {
+          unless($is_copy) {
+            my $x = $$content_r;
+            $content_r = \$x; # copy
+            $is_copy = 1;
+          }
+          if($nl eq "\cm") {
+            $$content_r =~ tr/\cm/\n/;
+            print "# Nativizing newlines from \\cm to \\n\n" if $Debug;
+          } elsif($nl eq "\cj") {
+            $$content_r =~ tr/\cj/\n/;
+            print "# Nativizing newlines from \\cj to \\n\n" if $Debug;
+          } elsif($nl eq "\cm\cj") {
+            $$content_r =~ tr/\cj//d;
+            $$content_r =~ tr/\cm/\n/ unless "\cm" eq "\n";
+            print "# Nativizing newlines from \\cm\\cj to \\n\n" if $Debug;
+          }
+        }
       }
 
       push @$comments,
@@ -483,19 +482,36 @@ $Debug = 2 unless defined $Debug;
 
 # Fill out Char2ent:
 {
-  die "\%Pod::Text::HTML_Escapes is empty?"
-   unless keys %Pod::Text::HTML_Escapes;
-
-  my($ent, $char);
-  while(($ent, $char) = each(%Pod::Text::HTML_Escapes)) {
-    $Char2ent{$char} = "E<$ent>" if 1 == length $char;
+  die "\%HTML::Entities::char2entity is empty?"
+   unless keys %HTML::Entities::char2entity;
+  
+  my($c,$e);
+  while(($c,$e) = each(%HTML::Entities::char2entity)) {
+    if($e =~ m{^&#(\d+);$}s) {
+      $Char2ent{$c} = "E<$1>";
+      #print "num $e => E<$1>\n";
+       # &#123; => E<123>
+    } elsif($e =~ m{^&([^;]+);$}s) {
+      $Char2ent{$c} = "E<$1>";
+      #print "eng $e => E<$1>\n";
+       # &eacute; => E<eacute>
+    } else {
+      warn "Unknown thingy in %HTML::Entities::char2entity: $e"
+      # if $^W;
+    }
   }
-  # Fill in all the blanks: 
-  for(0 .. 255) {
-    $Char2ent{$char} = "E<$_>"
-     unless exists $Char2ent{$char = chr($_)}; 
-  }
-  @Char2ent{'/', '|'} = ("E<sol>", "E<verbar>");
+  
+  # Points of difference between HTML entities and POD entities:
+  
+  $Char2ent{"\xA0"} = "E<160>"; # there is no E<nbsp>
+  
+  $Char2ent{"\xAB"} = "E<lchevron>";
+  $Char2ent{"\xBB"} = "E<rchevron>";
+   # Altho new POD processors also know E<laquo> and E<raquo>
+  
+  # Old POD processors don't know these two -- so leave numeric
+  # $Char2ent{'/'} = 'E<sol>';
+  # $Char2ent{'|'} = 'E<verbar>';
 }
 
 # Set up some initial values we'll need later.
@@ -684,12 +700,12 @@ sub p_unnest {
     if($p->parent->tag eq 'p') {
       my @c = $p->detach_content;
       $p->replace_with(
-		       HTML::Element->new( 'br',
-					   'id', '``G' . ++$counter),
-		       @c,
-		       HTML::Element->new( 'br',
-					   'id', '``G' . ++$counter),
-		      );
+                       HTML::Element->new( 'br',
+                                           'id', '``G' . ++$counter),
+                       @c,
+                       HTML::Element->new( 'br',
+                                           'id', '``G' . ++$counter),
+                      );
     }
   }
 }
@@ -703,9 +719,9 @@ sub delete_unknowns {
   my($tag, $elements);
   while(($tag,$elements) = each %$map_r) {
     commentate($tree, join ", ",
-	       "#  Unknown \"$tag\" elements deleted: ",
-	       map $_->attr('id'), @$elements
-	      );
+               "#  Unknown \"$tag\" elements deleted: ",
+               map $_->attr('id'), @$elements
+              );
     foreach my $e (@$elements) { $e->replace_with_content }
   }
   return;
@@ -715,12 +731,12 @@ sub delete_unknowns {
 sub special_splice_div {
   foreach my $div ($_[0]->find_by_tag_name('div', 'iframe')) {
     $div->replace_with(
-		       HTML::Element->new( 'br',
-					   'id', '``G' . ++$counter),
-		       $div->content_list(),
-		       HTML::Element->new( 'br',
-					   'id', '``G' . ++$counter),
-		      );
+                       HTML::Element->new( 'br',
+                                           'id', '``G' . ++$counter),
+                       $div->content_list(),
+                       HTML::Element->new( 'br',
+                                           'id', '``G' . ++$counter),
+                      );
   }
   return;
 }
@@ -734,19 +750,19 @@ sub winge_about_phrasal_paradoxes {
     @non_phrasal_children = ();
     foreach my $c ($p->content_list) {
       push @non_phrasal_children, $c
-	if ref $c and not $Phrasal{$c->tag};
+        if ref $c and not $Phrasal{$c->tag};
     }
     if(@non_phrasal_children) {
       my $tag = $p->tag;
       commentate( $tree, 
-		  join '',
-		  " Deleting phrasal \"$tag\" element (",
-		  $p->attr('id'),
-		  ") because it has super-phrasal elements (",
-		  join(", ",
+                  join '',
+                  " Deleting phrasal \"$tag\" element (",
+                  $p->attr('id'),
+                  ") because it has super-phrasal elements (",
+                  join(", ",
                     map $_->attr('id'), @non_phrasal_children
                   ), ") as children.",
-		)
+                )
       ;
       $p->replace_with_content;
     }
@@ -773,7 +789,7 @@ sub html_node_name {
     foreach my $node (@$nodes) {
       ++$counter;
       $node->attr('id',
-		  $node->attr('id') || ( '`' . $name . '_' . $counter )
+                  $node->attr('id') || ( '`' . $name . '_' . $counter )
                  )
       ;
     }
@@ -845,17 +861,17 @@ sub render_headings {
        # Don't have things other than texticles in headings
     } else {
       if(@c > 1) {
-	# promote all but the first element
-	$h->detach_content;
-	$h->push_content(shift @c);
-	$h->postinsert(@c);
-	# SHOULD HAVE HAPPENED ANYWAY.
+        # promote all but the first element
+        $h->detach_content;
+        $h->push_content(shift @c);
+        $h->postinsert(@c);
+        # SHOULD HAVE HAPPENED ANYWAY.
       }
        # else @c is just one element, a texticle -- which is ideal.
       commentate($tree,
-		 "# Icky: heading " . $h->attr('id')
-		 . " not immediately under body."
-		) unless $h->parent eq $tree;
+                 "# Icky: heading " . $h->attr('id')
+                 . " not immediately under body."
+                ) unless $h->parent eq $tree;
     }
   }
 
@@ -925,9 +941,9 @@ sub promote_some_secondary_children {
       # Take all children after the first, and move them up to
       #  being right sisters of this node.
       print
-	"# Promote_some_secondary_children applies to ",
+        "# Promote_some_secondary_children applies to ",
         $x->attr('id'),
-	": (",
+        ": (",
         join(", ", map $_->attr('id'), @c), ")\n" if $Debug;
       $x->detach_content;
       $x->push_content(shift @c);
@@ -949,7 +965,7 @@ sub literalize_text_under {
     } else {
       $dirty = 1;
       $c = HTML::Element->new('~literal', 'text' => $c,
-			      'id', '``G' . ++$counter);
+                              'id', '``G' . ++$counter);
     }
   }
   if($dirty) {
@@ -991,7 +1007,7 @@ sub texticulate {
         $dirty = 1;
         my $old = $children[$i];
         $children[$i] = HTML::Element->new('~texticle',
-					   'id', '``G' . ++$counter);
+                                           'id', '``G' . ++$counter);
         $children[$i]->push_content($old); # and demote the phrasal to under it
       } elsif($last_tag eq '~texticle') {
         # move this under preceding texticle
@@ -1073,8 +1089,8 @@ sub wrangle_body_children {
       $dirty = 1;
       (
        $children[$i] = HTML::Element->new('p', 'superimplicit' => 1,
-					  'id', '``G' . ++$counter
-					 )
+                                          'id', '``G' . ++$counter
+                                         )
       )->push_content($c);
     #} elsif($c->tag eq 'hr') {
     #  # do anything special?
@@ -1245,10 +1261,10 @@ sub images_render {
       $img->replace_with($alt);
     } else {
       $img->replace_with(
-			 $Debug ? 
-			 ('[IMAGE' . $img->attr('id') . ']') :
-			 '[IMAGE]'
-			);
+                         $Debug ? 
+                         ('[IMAGE' . $img->attr('id') . ']') :
+                         '[IMAGE]'
+                        );
       #?? $img->delete;
     }
   }
@@ -1427,7 +1443,7 @@ sub render_texticle {
 
       if(defined $href and length $href) {
         encode_entities($href);
-	#print "{Link text:{$href}}\n";
+        #print "{Link text:{$href}}\n";
         if($href =~ s/^#//s) {
           # internal relative href
           $text .= 'L<';
@@ -1447,9 +1463,9 @@ sub render_texticle {
           # and handle appropriately.
           $post .= " ($href)";
         } else {
-	  # a relative link??
+          # a relative link??
           $href = $href;
-	  commentate($t->root, "# Untranslatable link: \"$href\"");
+          commentate($t->root, "# Untranslatable link: \"$href\"");
         }
       }
     } else {
@@ -1587,8 +1603,8 @@ sub linked_dupe {
   my(@new, $prev, $this);
   foreach my $x (@_) {
     push @new, $this = HTML::Element->new($x->tag,
-					  $x->all_external_attr(),
-					  'id', '``G' . ++$counter,
+                                          $x->all_external_attr(),
+                                          'id', '``G' . ++$counter,
                                          );
     $prev->push_content($this) if $prev; # link to prev
     $prev = $this;

@@ -1,6 +1,15 @@
 Revision history for Perl extension Pod::HTML2Pod
-                                        Time-stamp: "2000-10-04 02:07:08 MDT"
+                                        Time-stamp: "2000-10-04 14:39:37 MDT"
 
+2000-10-04  Sean M. Burke  sburke@cpan.org
+	
+	* Release 4.04
+	
+	* No longer uses Pod::Text -- gets its entities table from
+	HTML::Entities, and then fiddles with that.
+
+	* Fixed a few incidental typos in the docs.
+	
 2000-10-04  Sean M. Burke  sburke@cpan.org
 
 	* Release 4.03 -- first public release.
