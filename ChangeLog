@@ -1,0 +1,14 @@
+Revision history for Perl extension Pod::HTML2Pod
+                                        Time-stamp: "2000-10-04 02:07:08 MDT"
+
+2000-10-04  Sean M. Burke  sburke@cpan.org
+
+	* Release 4.03 -- first public release.
+
+1998-12-06  Sean M. Burke  sburke@cpan.org
+
+	* I first modlist-register my idea for Pod::HTML2Pod.  Things keep
+	pulling me away from it -- like getting HTML::TreeBuilder to work
+	right, which is sort of a logical prerequisite.  Over the months,
+	I write and scrap about four different "near-working" (i.e.,
+	nearly useless) versions of Pod::HTML2Pod.
