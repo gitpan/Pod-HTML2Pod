@@ -1,6 +1,6 @@
 
 require 5;
- # Time-stamp: "2000-10-04 14:42:06 MDT"
+ # Time-stamp: "2004-12-29 18:41:19 AST"
 
 package Pod::HTML2Pod;
 use strict;
@@ -14,7 +14,7 @@ use HTML::Entities (); # presumably used by HTML::Parser anyhow
 use vars qw($Debug $VERSION %Phrasal %Char2ent
             $nbsp $E_slash $E_vbar $counter);
 
-$VERSION = '4.04';
+$VERSION = '4.05';
 $Debug = 0 unless defined $Debug;
 
 =head1 NAME

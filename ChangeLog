@@ -1,6 +1,10 @@
 Revision history for Perl extension Pod::HTML2Pod
-                                        Time-stamp: "2000-10-04 14:39:37 MDT"
+                                        Time-stamp: "2004-12-29 18:41:59 AST"
 
+2004-12-29  Sean M. Burke  sburke@cpan.org
+
+        * Release 4.05 -- just rebundling; no code changes
+		
 2000-10-04  Sean M. Burke  sburke@cpan.org
 	
 	* Release 4.04
